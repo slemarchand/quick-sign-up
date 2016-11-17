@@ -14,56 +14,50 @@
 
 package com.slemarchand.quicksignup.portlet;
 
-import com.liferay.portal.ContactFirstNameException;
-import com.liferay.portal.ContactFullNameException;
-import com.liferay.portal.ContactLastNameException;
-import com.liferay.portal.DuplicateUserEmailAddressException;
-import com.liferay.portal.DuplicateUserScreenNameException;
-import com.liferay.portal.EmailAddressException;
-import com.liferay.portal.GroupFriendlyURLException;
-import com.liferay.portal.RequiredFieldException;
-import com.liferay.portal.RequiredUserException;
-import com.liferay.portal.ReservedUserEmailAddressException;
-import com.liferay.portal.ReservedUserScreenNameException;
-import com.liferay.portal.UserEmailAddressException;
-import com.liferay.portal.UserIdException;
-import com.liferay.portal.UserPasswordException;
-import com.liferay.portal.UserScreenNameException;
+
+import com.liferay.portal.kernel.exception.ContactNameException;
+import com.liferay.portal.kernel.exception.EmailAddressException;
+import com.liferay.portal.kernel.exception.GroupFriendlyURLException;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.RequiredFieldException;
+import com.liferay.portal.kernel.exception.RequiredUserException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.exception.UserEmailAddressException;
+import com.liferay.portal.kernel.exception.UserIdException;
+import com.liferay.portal.kernel.exception.UserPasswordException;
+import com.liferay.portal.kernel.exception.UserScreenNameException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.PasswordPolicy;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.kernel.security.auth.session.AuthenticatedSessionManagerUtil;
+import com.liferay.portal.kernel.service.PasswordPolicyLocalServiceUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextFactory;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.service.UserServiceUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.Company;
-import com.liferay.portal.model.CompanyConstants;
-import com.liferay.portal.model.PasswordPolicy;
-import com.liferay.portal.model.User;
-import com.liferay.portal.service.PasswordPolicyLocalServiceUtil;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceContextFactory;
-import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portal.service.UserServiceUtil;
-import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portal.util.PortalUtil;
-import com.liferay.util.bridges.mvc.MVCPortlet;
-
-import com.slemarchand.quicksignup.util.WebKeys;
+import com.liferay.portal.kernel.util.WebKeys;
 
 import java.io.IOException;
-
 import java.util.UUID;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletException;
-
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Portlet implementation class SignUpPortlet
@@ -79,52 +73,45 @@ public class QuickSignUpPortlet extends MVCPortlet {
 			ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
+			String password = ParamUtil.getString(actionRequest, "password");
+			
 			User user = null;
 
-			try {
-				user = addUser(actionRequest, actionResponse);
-			}
-			catch (Exception e) {
-				if (e instanceof DuplicateUserEmailAddressException ||
-					e instanceof DuplicateUserScreenNameException ||
-					e instanceof ContactFirstNameException ||
-					e instanceof ContactFullNameException ||
-					e instanceof ContactLastNameException ||
-					e instanceof EmailAddressException ||
-					e instanceof GroupFriendlyURLException ||
-					e instanceof RequiredFieldException ||
-					e instanceof RequiredUserException ||
-					e instanceof ReservedUserEmailAddressException ||
-					e instanceof ReservedUserScreenNameException ||
-					e instanceof UserEmailAddressException ||
-					e instanceof UserIdException ||
-					e instanceof UserPasswordException ||
-					e instanceof UserScreenNameException) {
-
-					SessionErrors.add(actionRequest, e.getClass(), e);
-				}
-				else {
-					throw new PortletException(e);
-				}
-			}
-
-			if (user != null) {
+		try {
+			user = addUser(actionRequest, actionResponse, password);
+		}
+		catch (UserEmailAddressException 
+						| UserScreenNameException
+						| ContactNameException 
+						| EmailAddressException
+						| GroupFriendlyURLException 
+						| RequiredFieldException
+						| RequiredUserException 
+						| UserIdException
+						| UserPasswordException e) {
+			SessionErrors.add(actionRequest, e.getClass(), e);
+		}
+		catch (SystemException | PortalException e) {
+			throw new PortletException(e);
+		} 
+				
+			if (user != null && !themeDisplay.isSignedIn()) {
 				try {
 					String redirect = getSuccessRedirect(actionRequest, actionResponse);
 
-					login(actionRequest, actionResponse, user, redirect);
+					login(themeDisplay, actionRequest, actionResponse, user, password, redirect);
 
-				} catch (SystemException e) {
-					throw new PortletException(e);
-				} catch (PortalException e) {
+				} catch (Exception e) {
 					throw new PortletException(e);
 				}
 			}
 	}
 
 	protected User addUser(
-			ActionRequest actionRequest, ActionResponse actionResponse)
-		throws Exception {
+			ActionRequest actionRequest,
+			ActionResponse actionResponse,
+			String password)
+			throws SystemException, PortalException {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -161,8 +148,8 @@ public class QuickSignUpPortlet extends MVCPortlet {
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			User.class.getName(), actionRequest);
 
-		password1 = ParamUtil.getString(actionRequest, "password");
-		password2 = password1;
+		password1 = password;
+		password2 = password;
 
 		User user = UserServiceUtil.addUser(
 			company.getCompanyId(), autoPassword, password1, password2,
@@ -190,12 +177,12 @@ public class QuickSignUpPortlet extends MVCPortlet {
 		return user;
 	}
 
-	protected String getLogin(ActionRequest actionRequest, User user) throws SystemException {
+	protected String getLogin(
+		ThemeDisplay themeDisplay, ActionRequest actionRequest, User user)
+		throws SystemException {
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		Company company = themeDisplay.getCompany();
+		Company company = themeDisplay
+			.getCompany();
 
 		String authType = company.getAuthType();
 
@@ -227,13 +214,25 @@ public class QuickSignUpPortlet extends MVCPortlet {
 		return redirect;
 	}
 
-	protected void login(ActionRequest actionRequest, ActionResponse actionResponse, User user, String redirect) throws SystemException {
+	protected void login(
+		ThemeDisplay themeDisplay, ActionRequest actionRequest,
+		ActionResponse actionResponse, User user, String password,
+		String redirect)
+		throws Exception {
 
-		HttpServletRequest originalRequest = PortalUtil.getOriginalServletRequest(PortalUtil.getHttpServletRequest(actionRequest));
+		HttpServletRequest request = PortalUtil.getOriginalServletRequest(
+				PortalUtil.getHttpServletRequest(actionRequest));
+		HttpServletResponse response = PortalUtil.getHttpServletResponse(
+				actionResponse);		
 
-		originalRequest.setAttribute(WebKeys.QUICK_SIGN_UP_LOGIN, getLogin(actionRequest, user));
-		originalRequest.setAttribute(WebKeys.QUICK_SIGN_UP_PASSWORD, actionRequest.getParameter("password"));
-		originalRequest.setAttribute(WebKeys.QUICK_SIGN_UP_REDIRECT, redirect);
+		String login = getLogin(themeDisplay, actionRequest, user);
+		
+		boolean rememberMe = false;
+		
+		String authType = themeDisplay.getCompany().getAuthType();
+		
+		AuthenticatedSessionManagerUtil.login(
+				request, response, login, password, rememberMe, authType);	
 	}
 
 	private static final boolean _USERS_REMINDER_QUERIES_ENABLED = GetterUtil.getBoolean(PropsUtil.get(PropsKeys.USERS_REMINDER_QUERIES_ENABLED));

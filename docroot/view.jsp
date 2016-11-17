@@ -31,14 +31,12 @@
 		<aui:input name="saveLastPath" type="hidden" value="<%= false %>" />
 		<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 	
-		<liferay-ui:error exception="<%= ContactFirstNameException.class %>" message="please-enter-a-valid-first-name" />
-		<liferay-ui:error exception="<%= ContactFullNameException.class %>" message="please-enter-a-valid-first-middle-and-last-name" />
-		<liferay-ui:error exception="<%= ContactLastNameException.class %>" message="please-enter-a-valid-last-name" />
-		<liferay-ui:error exception="<%= DuplicateUserEmailAddressException.class %>" message="the-email-address-you-requested-is-already-taken" />
-		<liferay-ui:error exception="<%= DuplicateUserIdException.class %>" message="the-user-id-you-requested-is-already-taken" />
-		<liferay-ui:error exception="<%= DuplicateUserScreenNameException.class %>" message="the-screen-name-you-requested-is-already-taken" />
+		<liferay-ui:error exception="<%= CompanyMaxUsersException.class %>" message="unable-to-create-user-account-because-the-maximum-number-of-users-has-been-reached" />
+		<liferay-ui:error exception="<%= ContactNameException.MustHaveFirstName.class %>" message="please-enter-a-valid-first-name" />
+		<liferay-ui:error exception="<%= ContactNameException.MustHaveLastName.class %>" message="please-enter-a-valid-last-name" />
+		<liferay-ui:error exception="<%= ContactNameException.MustHaveValidFullName.class %>" message="please-enter-a-valid-first-middle-and-last-name" />
 		<liferay-ui:error exception="<%= EmailAddressException.class %>" message="please-enter-a-valid-email-address" />
-	
+
 		<liferay-ui:error exception="<%= GroupFriendlyURLException.class %>">
 	
 			<%
@@ -51,45 +49,53 @@
 		</liferay-ui:error>
 	
 		<liferay-ui:error exception="<%= RequiredFieldException.class %>" message="please-fill-out-all-required-fields" />
-		<liferay-ui:error exception="<%= ReservedUserEmailAddressException.class %>" message="the-email-address-you-requested-is-reserved" />
-		<liferay-ui:error exception="<%= ReservedUserIdException.class %>" message="the-user-id-you-requested-is-reserved" />
-		<liferay-ui:error exception="<%= ReservedUserScreenNameException.class %>" message="the-screen-name-you-requested-is-reserved" />
-		<liferay-ui:error exception="<%= UserEmailAddressException.class %>" message="please-enter-a-valid-email-address" />
-		<liferay-ui:error exception="<%= UserIdException.class %>" message="please-enter-a-valid-user-id" />
-	
-		<liferay-ui:error exception="<%= UserPasswordException.class %>">
-	
+		<liferay-ui:error exception="<%= UserEmailAddressException.MustNotBeDuplicate.class %>" message="the-email-address-you-requested-is-already-taken" />
+		<liferay-ui:error exception="<%= UserEmailAddressException.MustNotBeNull.class %>" message="please-enter-an-email-address" />
+		<liferay-ui:error exception="<%= UserEmailAddressException.MustNotBePOP3User.class %>" message="the-email-address-you-requested-is-reserved" />
+		<liferay-ui:error exception="<%= UserEmailAddressException.MustNotBeReserved.class %>" message="the-email-address-you-requested-is-reserved" />
+		<liferay-ui:error exception="<%= UserEmailAddressException.MustNotUseCompanyMx.class %>" message="the-email-address-you-requested-is-not-valid-because-its-domain-is-reserved" />
+		<liferay-ui:error exception="<%= UserEmailAddressException.MustValidate.class %>" message="please-enter-a-valid-email-address" />
+
+		<liferay-ui:error exception="<%= UserPasswordException.MustBeLonger.class %>">
+
 			<%
-			UserPasswordException upe = (UserPasswordException)errorException;
+			UserPasswordException.MustBeLonger upe = (UserPasswordException.MustBeLonger)errorException;
 			%>
 	
-			<c:if test="<%= upe.getType() == UserPasswordException.PASSWORD_CONTAINS_TRIVIAL_WORDS %>">
-				<liferay-ui:message key="that-password-uses-common-words-please-enter-in-a-password-that-is-harder-to-guess-i-e-contains-a-mix-of-numbers-and-letters" />
-			</c:if>
-	
-			<c:if test="<%= upe.getType() == UserPasswordException.PASSWORD_INVALID %>">
-				<liferay-ui:message key="that-password-is-invalid-please-enter-in-a-different-password" />
-			</c:if>
-	
-			<c:if test="<%= upe.getType() == UserPasswordException.PASSWORD_LENGTH %>">
-	
-				<%
-				PasswordPolicy passwordPolicy = PasswordPolicyLocalServiceUtil.getDefaultPasswordPolicy(company.getCompanyId());
-				%>
-	
-				<%= LanguageUtil.format(pageContext, "that-password-is-too-short-or-too-long-please-make-sure-your-password-is-between-x-and-512-characters", String.valueOf(passwordPolicy.getMinLength()), false) %>
-			</c:if>
-	
-			<c:if test="<%= upe.getType() == UserPasswordException.PASSWORD_TOO_TRIVIAL %>">
-				<liferay-ui:message key="that-password-is-too-trivial" />
-			</c:if>
-	
-			<c:if test="<%= upe.getType() == UserPasswordException.PASSWORDS_DO_NOT_MATCH %>">
-				<liferay-ui:message key="the-passwords-you-entered-do-not-match-each-other-please-re-enter-your-password" />
-			</c:if>
+			<liferay-ui:message arguments="<%= String.valueOf(upe.minLength) %>" key="that-password-is-too-short" translateArguments="<%= false %>" />
 		</liferay-ui:error>
 	
-		<liferay-ui:error exception="<%= UserScreenNameException.class %>" message="please-enter-a-valid-screen-name" />
+		<liferay-ui:error exception="<%= UserPasswordException.MustComplyWithModelListeners.class %>" message="that-password-is-invalid-please-enter-a-different-password" />
+	
+		<liferay-ui:error exception="<%= UserPasswordException.MustComplyWithRegex.class %>">
+	
+			<%
+			UserPasswordException.MustComplyWithRegex upe = (UserPasswordException.MustComplyWithRegex)errorException;
+			%>
+	
+			<liferay-ui:message arguments="<%= upe.regex %>" key="that-password-does-not-comply-with-the-regular-expression" translateArguments="<%= false %>" />
+		</liferay-ui:error>
+	
+		<liferay-ui:error exception="<%= UserPasswordException.MustMatch.class %>" message="the-passwords-you-entered-do-not-match" />
+		<liferay-ui:error exception="<%= UserPasswordException.MustNotBeNull.class %>" message="the-password-cannot-be-blank" />
+		<liferay-ui:error exception="<%= UserPasswordException.MustNotBeTrivial.class %>" message="that-password-uses-common-words-please-enter-a-password-that-is-harder-to-guess-i-e-contains-a-mix-of-numbers-and-letters" />
+		<liferay-ui:error exception="<%= UserPasswordException.MustNotContainDictionaryWords.class %>" message="that-password-uses-common-dictionary-words" />
+		<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeDuplicate.class %>" focusField="screenName" message="the-screen-name-you-requested-is-already-taken" />
+		<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeNull.class %>" focusField="screenName" message="the-screen-name-cannot-be-blank" />
+		<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeNumeric.class %>" focusField="screenName" message="the-screen-name-cannot-contain-only-numeric-values" />
+		<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeReserved.class %>" message="the-screen-name-you-requested-is-reserved" />
+		<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeReservedForAnonymous.class %>" focusField="screenName" message="the-screen-name-you-requested-is-reserved-for-the-anonymous-user" />
+		<liferay-ui:error exception="<%= UserScreenNameException.MustNotBeUsedByGroup.class %>" focusField="screenName" message="the-screen-name-you-requested-is-already-taken-by-a-site" />
+		<liferay-ui:error exception="<%= UserScreenNameException.MustProduceValidFriendlyURL.class %>" focusField="screenName" message="the-screen-name-you-requested-must-produce-a-valid-friendly-url" />
+	
+		<liferay-ui:error exception="<%= UserScreenNameException.MustValidate.class %>" focusField="screenName">
+	
+			<%
+			UserScreenNameException.MustValidate usne = (UserScreenNameException.MustValidate)errorException;
+			%>
+	
+			<liferay-ui:message key="<%= usne.screenNameValidator.getDescription(locale) %>" />
+		</liferay-ui:error>
 	
 		<aui:model-context model="<%= Contact.class %>" />
 	
@@ -102,14 +108,25 @@
 					</c:if>
 				</aui:input>
 	
-				<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" model="<%= User.class %>" name="firstName" />
+				<%
+				FullNameDefinition fullNameDefinition = FullNameDefinitionFactory.getInstance(locale);
+				%>
 	
-				<aui:input model="<%= User.class %>" name="lastName">
-					<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_LAST_NAME_REQUIRED, GetterUtil.getBoolean(PropsUtil.get(PropsKeys.USERS_LAST_NAME_REQUIRED), false)) %>">
+				<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" model="<%= User.class %>" name="firstName">
+					<c:if test="<%= fullNameDefinition.isFieldRequired("first-name") %>">
 						<aui:validator name="required" />
 					</c:if>
 				</aui:input>
-	
+					
+				<aui:input model="<%= User.class %>" name="lastName">
+					<c:if test="<%= fullNameDefinition.isFieldRequired("last-name") %>">
+						<aui:validator name="required" />
+					</c:if>
+				</aui:input>
+
+				<liferay-ui:error exception="<%= ContactNameException.MustHaveFirstName.class %>" message="please-enter-a-valid-first-name" />
+				<liferay-ui:error exception="<%= ContactNameException.MustHaveValidFullName.class %>" message="please-enter-a-valid-first-middle-and-last-name" />
+
 			</aui:col>
 	
 			<aui:col width="<%= 50 %>">
@@ -118,7 +135,9 @@
 					<aui:input model="<%= User.class %>" name="screenName" />
 				</c:if>
 	
-				<aui:input label="password" name="password" size="30" type="password" value="" />
+				<aui:input label="password" name="password" size="30" type="password" value="">
+					<aui:validator name="required" />
+				</aui:input>
 	
 				<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.FIELD_ENABLE_COM_LIFERAY_PORTAL_MODEL_CONTACT_MALE) %>">
 					<aui:select label="gender" name="male">

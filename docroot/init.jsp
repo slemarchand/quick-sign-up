@@ -25,22 +25,15 @@
 <%@ taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %>
 <%@ taglib uri="http://liferay.com/tld/util" prefix="liferay-util" %>
 
-<%@ page import="com.liferay.portal.ContactFirstNameException" %><%@
-page import="com.liferay.portal.ContactFullNameException" %><%@
-page import="com.liferay.portal.ContactLastNameException" %><%@
-page import="com.liferay.portal.DuplicateUserEmailAddressException" %><%@
-page import="com.liferay.portal.DuplicateUserIdException" %><%@
-page import="com.liferay.portal.DuplicateUserScreenNameException" %><%@
-page import="com.liferay.portal.EmailAddressException" %><%@
-page import="com.liferay.portal.GroupFriendlyURLException" %><%@
-page import="com.liferay.portal.RequiredFieldException" %><%@
-page import="com.liferay.portal.ReservedUserEmailAddressException" %><%@
-page import="com.liferay.portal.ReservedUserIdException" %><%@
-page import="com.liferay.portal.ReservedUserScreenNameException" %><%@
-page import="com.liferay.portal.UserEmailAddressException" %><%@
-page import="com.liferay.portal.UserIdException" %><%@
-page import="com.liferay.portal.UserPasswordException" %><%@
-page import="com.liferay.portal.UserScreenNameException" %><%@
+<%@ page import="com.liferay.portal.kernel.exception.CompanyMaxUsersException" %><%@
+page import="com.liferay.portal.kernel.exception.ContactNameException" %><%@
+page import="com.liferay.portal.kernel.exception.EmailAddressException" %><%@
+page import="com.liferay.portal.kernel.exception.GroupFriendlyURLException" %><%@
+page import="com.liferay.portal.kernel.exception.RequiredFieldException" %><%@
+page import="com.liferay.portal.kernel.exception.UserEmailAddressException" %><%@
+page import="com.liferay.portal.kernel.exception.UserIdException" %><%@
+page import="com.liferay.portal.kernel.exception.UserPasswordException" %><%@
+page import="com.liferay.portal.kernel.exception.UserScreenNameException" %><%@
 page import="com.liferay.portal.kernel.language.LanguageUtil" %><%@
 page import="com.liferay.portal.kernel.util.GetterUtil" %><%@
 page import="com.liferay.portal.kernel.util.ParamUtil" %><%@
@@ -48,10 +41,12 @@ page import="com.liferay.portal.kernel.util.PrefsPropsUtil" %><%@
 page import="com.liferay.portal.kernel.util.PropsKeys" %><%@
 page import="com.liferay.portal.kernel.util.PropsUtil" %><%@
 page import="com.liferay.portal.kernel.util.StringPool" %><%@
-page import="com.liferay.portal.model.*" %><%@
-page import="com.liferay.portal.model.impl.*" %><%@
-page import="com.liferay.portal.service.*" %><%@
-page import="com.liferay.portlet.PortletURLUtil" %>
+page import="com.liferay.portal.kernel.model.CompanyConstants" %><%@
+page import="com.liferay.portal.kernel.model.Contact" %><%@
+page import="com.liferay.portal.kernel.model.User" %><%@
+page import="com.liferay.portal.kernel.portlet.PortletURLUtil" %><%@
+page import="com.liferay.portal.kernel.security.auth.FullNameDefinition" %><%@
+page import="com.liferay.portal.kernel.security.auth.FullNameDefinitionFactory" %>
 
 <%@ page import="javax.portlet.PortletMode" %><%@
 page import="javax.portlet.PortletURL" %><%@
