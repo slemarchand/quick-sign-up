@@ -14,3 +14,5 @@ docroot/WEB-INF/classes
 .classpath
 .project
 .tern-project
+.gradle
+quick-sign-up-web/bin

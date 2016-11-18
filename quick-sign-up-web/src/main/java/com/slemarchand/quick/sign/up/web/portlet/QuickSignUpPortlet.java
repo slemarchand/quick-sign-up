@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.slemarchand.quicksignup.portlet;
+package com.slemarchand.quick.sign.up.web.portlet;
 
 
 import com.liferay.portal.kernel.exception.ContactNameException;
@@ -49,21 +49,45 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.slemarchand.quick.sign.up.web.constants.QuickSignUpPortletKeys;
 
 import java.io.IOException;
 import java.util.UUID;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
+import javax.portlet.Portlet;
 import javax.portlet.PortletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.osgi.service.component.annotations.Component;
+
 /**
- * Portlet implementation class SignUpPortlet
- *
  * @author Sebastien Le Marchand
  */
+@Component(
+	immediate = true,
+	property = {
+		"com.liferay.portlet.add-default-resource=true",
+		"com.liferay.portlet.css-class-wrapper=portlet-quick-sign-up",
+		"com.liferay.portlet.display-category=category.tools",
+		"com.liferay.portlet.icon=/icon.png",
+		"com.liferay.portlet.preferences-owned-by-group=true", //
+		"com.liferay.portlet.private-request-attributes=false", //
+		"com.liferay.portlet.private-session-attributes=false", //
+		"com.liferay.portlet.render-weight=50", //
+		"com.liferay.portlet.use-default-template=true", //
+		"javax.portlet.display-name=Quick Sign Up",
+		"javax.portlet.expiration-cache=0",
+		"javax.portlet.init-param.add-process-action-success-action=false", //
+		"javax.portlet.init-param.view-template=/view.jsp",
+		"javax.portlet.name=" + QuickSignUpPortletKeys.QUICK_SIGN_UP,
+		"javax.portlet.security-role-ref=guest,power-user,user",
+		"javax.portlet.supports.mime-type=text/html"
+    },
+    service = Portlet.class
+)
 public class QuickSignUpPortlet extends MVCPortlet {
 
 	@Override
@@ -233,6 +257,8 @@ public class QuickSignUpPortlet extends MVCPortlet {
 		
 		AuthenticatedSessionManagerUtil.login(
 				request, response, login, password, rememberMe, authType);	
+		
+		actionResponse.sendRedirect(redirect);
 	}
 
 	private static final boolean _USERS_REMINDER_QUERIES_ENABLED = GetterUtil.getBoolean(PropsUtil.get(PropsKeys.USERS_REMINDER_QUERIES_ENABLED));
